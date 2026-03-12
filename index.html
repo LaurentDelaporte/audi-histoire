@@ -2,287 +2,89 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audi Heritage | 150 Questions d'Histoire</title>
+    <title>Audi Heritage | Quiz</title>
     <style>
-        :root {
-            --audi-silver: #a0a0a0;
-            --audi-red: #f1052d;
-            --bg-black: #050505;
-            --paper: #e5e5e5;
-        }
-        body { font-family: 'Times New Roman', serif; background: var(--bg-black); color: var(--paper); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        #quiz-container { width: 95%; max-width: 850px; background: #111; padding: 40px; border: 1px solid #333; position: relative; box-shadow: 0 0 40px rgba(255,255,255,0.05); }
-        #timer { font-size: 2.2rem; color: var(--audi-red); text-align: center; margin-bottom: 20px; font-weight: bold; letter-spacing: 2px; }
-        .progress-bar { height: 2px; background: #222; width: 100%; margin-bottom: 30px; }
-        .progress-fill { height: 100%; background: var(--audi-red); width: 0%; transition: 0.4s; }
-        .question { font-size: 1.6rem; margin-bottom: 30px; text-align: center; line-height: 1.4; font-style: italic; }
-        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        button { padding: 18px; border: 1px solid #444; background: transparent; color: var(--paper); cursor: pointer; transition: 0.3s; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-        button:hover:not(:disabled) { background: var(--paper); color: black; border-color: var(--paper); }
-        .correct { background: #28a745 !important; border-color: #28a745; color: white; }
-        .wrong { background: #dc3545 !important; border-color: #dc3545; color: white; }
-        #insight-box { margin-top: 30px; padding: 25px; background: #1a1a1a; border-left: 5px solid var(--audi-red); display: none; }
-        #insight-text { font-size: 1.1rem; line-height: 1.6; color: var(--audi-silver); }
-        #next-btn { margin-top: 20px; background: var(--audi-red); color: white; border: none; padding: 12px 35px; cursor: pointer; float: right; font-weight: bold; }
-        #score-screen { text-align: center; display: none; }
-        @media (max-width: 600px) { .options { grid-template-columns: 1fr; } }
+        :root { --audi-red: #f1052d; --bg-black: #050505; --paper: #e5e5e5; }
+        body { font-family: sans-serif; background: var(--bg-black); color: var(--paper); display: flex; justify-content: center; padding: 20px; }
+        #quiz-container { width: 100%; max-width: 800px; }
+        #timer { font-size: 2rem; color: var(--audi-red); text-align: center; margin-bottom: 20px; }
+        .options { display: grid; gap: 10px; margin-top: 20px; }
+        button { padding: 15px; cursor: pointer; background: #222; color: white; border: 1px solid #444; }
+        .correct { background: #28a745 !important; }
+        .wrong { background: #dc3545 !important; }
+        #insight-box { margin-top: 20px; padding: 15px; background: #1a1a1a; display: none; border-left: 4px solid var(--audi-red); }
     </style>
 </head>
 <body>
 
 <div id="quiz-container">
-    <div id="game-view">
-        <div id="timer">30</div>
-        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-        <div id="question-text" class="question">Chargement de l'histoire...</div>
-        <div id="options-container" class="options"></div>
-        <div id="insight-box">
-            <h4 style="margin:0 0 10px 0; color:var(--audi-red); text-transform: uppercase; font-size: 0.8rem;">Note Historique</h4>
-            <p id="insight-text"></p>
-            <button id="next-btn" onclick="loadNextQuestion()">Suivant →</button>
-        </div>
-    </div>
-
-    <div id="score-screen">
-        <h1 style="font-size: 2.5rem; letter-spacing: 3px;">ANALYSE TERMINÉE</h1>
-        <p id="final-score" style="font-size: 5rem; margin: 20px 0; font-weight: bold; color: var(--audi-red);"></p>
-        <button onclick="location.reload()" style="background: white; color: black; border:none; padding: 15px 40px; font-weight: bold; cursor: pointer;">RECOMMENCER</button>
+    <div id="timer">30</div>
+    <div id="question-text" style="font-size: 1.5rem; text-align: center;">Chargement...</div>
+    <div id="options-container" class="options"></div>
+    <div id="insight-box">
+        <p id="insight-text"></p>
+        <button id="next-btn" onclick="nextQuestion()">Suivant →</button>
     </div>
 </div>
 
 <script>
+// Ton tableau de données doit être parfaitement propre
 const quizData = [
-    { q: "En quelle année August Horch a-t-il fondé sa première société 'Horch & Cie' ?", o: ["1899", "1904", "1909", "1932"], a: 0, i: "August Horch a fondé son entreprise à Cologne avant de s'installer en Saxe." },
-    { q: "Que signifie 'Audi' en latin ?", o: ["Quatre", "Écoute !", "Cercle", "Rapide"], a: 1, i: "C'est la traduction latine de 'Horch' (écoute en allemand). Ce nom fut suggéré par le fils d'un ami d'August Horch." },
-    { q: "En 1932, quatre marques fusionnent pour former Auto Union. Audi, Horch, Wanderer et...", o: ["BMW", "Opel", "DKW", "NSU"], a: 2, i: "DKW était le spécialiste des moteurs deux-temps et des petites voitures à l'époque." },
-    { q: "Quel ingénieur de génie a conçu les Flèches d'Argent d'Auto Union dans les années 30 ?", o: ["Ferdinand Porsche", "Enzo Ferrari", "Rudolf Diesel", "Wilhelm Maybach"], a: 0, i: "Ferdinand Porsche a conçu les voitures de course à moteur central arrière pour Auto Union." },
-    { q: "Où se trouve le siège social mondial d'Audi aujourd'hui ?", o: ["Berlin", "Munich", "Ingolstadt", "Cologne"], a: 2, i: "Ingolstadt est le cœur de la marque depuis la refondation après la Seconde Guerre mondiale." },
-    { q: "En quelle année le groupe Volkswagen a-t-il racheté Audi ?", o: ["1955", "1964", "1972", "1980"], a: 1, i: "VW a racheté la marque à Daimler-Benz, qui ne voyait plus de futur pour Auto Union." },
-    { q: "Quel modèle de 1968 a sauvé l'indépendance technologique d'Audi ?", o: ["Audi 50", "Audi 80", "Audi 100", "Audi Quattro"], a: 2, i: "L'Audi 100 a été développée en secret par Ludwig Kraus, malgré l'opposition initiale de VW." },
-    { q: "Qui a dirigé Audi dans les années 80 et a imposé le slogan 'Vorsprung durch Technik' ?", o: ["Ferdinand Piëch", "Martin Winterkorn", "Herbert Diess", "Markus Duesmann"], a: 0, i: "Piëch, petit-fils de Porsche, est l'homme qui a transformé Audi en marque premium mondiale." },
-    { q: "Quel système révolutionnaire Audi a-t-elle présenté au Salon de Genève 1980 ?", o: ["Le Diesel TDI", "Le châssis Alu", "La transmission Quattro", "L'ABS"], a: 2, i: "Le système Quattro a changé le monde du rallye et de la performance routière pour toujours." },
-    { q: "Quelle pilote est devenue la première femme à gagner en WRC avec l'Audi Quattro ?", o: ["Danica Patrick", "Michèle Mouton", "Jutta Kleinschmidt", "Pat Moss"], a: 1, i: "Michèle Mouton a remporté le rallye de Sanremo en 1981, un exploit historique." },
-    { q: "En quelle année est sortie l'Audi A8, la première avec châssis en aluminium (ASF) ?", o: ["1988", "1994", "1998", "2002"], a: 1, i: "L'Audi Space Frame (ASF) a permis de réduire drastiquement le poids des grandes berlines." },
-    { q: "Quel modèle dessiné par Freeman Thomas est devenu une icône du design en 1998 ?", o: ["Audi A3", "Audi TT", "Audi R8", "Audi Q7"], a: 1, i: "Le TT est considéré comme l'un des designs les plus influents de la fin du 20ème siècle." },
-    { q: "Combien de fois Audi a-t-elle remporté les 24 Heures du Mans ?", o: ["5", "9", "13", "16"], a: 2, i: "Entre 2000 et 2014, Audi a exercé une domination quasi-totale avec ses moteurs TDI et hybrides." },
-    { q: "Quelle marque de moto légendaire appartient au groupe Audi depuis 2012 ?", o: ["BMW", "Ducati", "MV Agusta", "Triumph"], a: 1, i: "Audi a acquis Ducati via sa filiale Lamborghini." },
-    { q: "Quel est le nom de la première voiture Audi 100% électrique de série ?", o: ["Audi e-tron", "Audi Q4", "Audi GT", "Audi A1 e-tron"], a: 0, i: "L'Audi e-tron (SUV) a été lancée en 2018 pour ouvrir l'ère de l'électromobilité." },
-    { q: "Quel pilote détient le record de victoires au Mans avec Audi ?", o: ["Tom Kristensen", "Allan McNish", "Benoît Tréluyer", "Jacky Ickx"], a: 0, i: "Tom Kristensen, surnommé 'Monsieur Le Mans', a gagné 9 fois au total, dont 7 avec Audi." },
-    { q: "Dans quelle ville se trouve l'usine qui fabrique les modèles 'e-tron GT' ?", o: ["Ingolstadt", "Neckarsulm", "Bruxelles", "Győr"], a: 1, i: "Ils sont produits sur le site de Böllinger Höfe à Neckarsulm." },
-    { q: "Quelle était la particularité de l'Audi A2 lancée en 1999 ?", o: ["Moteur rotatif", "Carrosserie 100% aluminium", "Pas de vitres électriques", "4 roues directrices"], a: 1, i: "Bien qu'en avance sur son temps, ses coûts de production en alu étaient trop élevés pour son segment." },
-    { q: "Quel modèle de 1980 a servi de base à l'homologation de la Quattro en Rallye ?", o: ["Audi 80", "Audi Coupé", "Audi 200", "Audi Quattro (Ur-Quattro)"], a: 3, i: "L'Ur-Quattro est devenue le modèle fondateur de l'ADN moderne d'Audi." },
-    { q: "En 1937, Auto Union a battu un record de vitesse sur autoroute. À combien ?", o: ["306 km/h", "356 km/h", "406 km/h", "456 km/h"], a: 2, i: "Bernd Rosemeyer a atteint 406 km/h sur une autoroute publique fermée." },
-    { q: "Quel ingénieur a dirigé le développement du moteur TDI chez Audi ?", o: ["Ferdinand Piëch", "Ulrich Baretzky", "Richard Bauder", "Hans Mezger"], a: 2, i: "Richard Bauder est considéré comme le père du TDI chez Audi." },
-    { q: "Quelle est la couleur officielle d'Audi Sport ?", o: ["Bleu", "Rouge", "Argent", "Noir"], a: 1, i: "Le losange rouge est l'emblème d'Audi Sport depuis des décennies." },
-    { q: "Comment s'appelait l'ancêtre d'Audi spécialisé dans les voitures de luxe ?", o: ["Horch", "DKW", "Wanderer", "NSU"], a: 0, i: "Horch était le concurrent direct de Mercedes-Benz dans l'entre-deux-guerres." },
-    { q: "En 2006, Audi gagne le Mans avec une technologie inédite en course. Laquelle ?", o: ["Le KERS", "Le moteur Diesel (TDI)", "Le Turbo", "Le GPL"], a: 1, i: "L'Audi R10 TDI a été la première voiture Diesel à gagner les 24 Heures du Mans." },
-    { q: "Quel pilote de rallye a fait du 'saut à ski' avec une Audi 100 CS pour une pub ?", o: ["Walter Röhrl", "Harald Demuth", "Stig Blomqvist", "Hannu Mikkola"], a: 1, i: "La publicité de 1986 sur le tremplin de Kaipola est devenue légendaire." },
-    { q: "Quel concept car de 1991 préfigurait la supercar R8 ?", o: ["Avus Quattro", "Quattro Spyder", "Rosemeyer", "Le Mans Quattro"], a: 0, i: "L'Avus Quattro avec sa carrosserie en aluminium poli était un hommage aux records de 1937." },
-    { q: "Qui est le designer de la première Audi A5, qu'il jugeait être sa plus belle création ?", o: ["Walter de Silva", "Marc Lichte", "Peter Schreyer", "Ian Callum"], a: 0, i: "Walter de Silva a défini le nouveau visage d'Audi dans les années 2000." },
-    { q: "Quelle voiture Audi a été la première à utiliser des phares LED en 2008 ?", o: ["Audi A4", "Audi R8", "Audi Q7", "Audi A8"], a: 1, i: "L'Audi R8 fut la première voiture au monde équipée de phares intégralement à LED." },
-    { q: "Quel est le nom de la division responsable des modèles RS ?", o: ["Audi Racing", "Audi Sport GmbH (ex-Quattro GmbH)", "S-Line Corp", "Vorsprung Division"], a: 1, i: "Anciennement Quattro GmbH, elle a été renommée Audi Sport GmbH en 2016." },
-    { q: "Quelle innovation a été introduite sur l'Audi A8 en 2017 (Niveau 3) ?", o: ["Le stationnement automatique", "Le pilote automatique (Traffic Jam Pilot)", "Les vitres blindées", "La direction par câble"], a: 1, i: "Audi fut le premier à proposer un système d'autonomie de niveau 3, bien que bridé par la législation." },
-    { q: "Quel type de moteur unique Audi utilise-t-elle encore sur sa RS3 ?", o: ["V6 Turbo", "4 cylindres Boxer", "5 cylindres en ligne", "V8 Biturbo"], a: 2, i: "Le 5 cylindres est une signature sonore et historique d'Audi depuis les années 70." },
-    { q: "En quelle année Audi a-t-elle fusionné avec NSU ?", o: ["1959", "1969", "1979", "1989"], a: 1, i: "La fusion a donné naissance à Audi NSU Auto Union AG, basée à Neckarsulm." },
-    { q: "Quelle innovation NSU a-t-elle apportée (mais qui fut un échec commercial) ?", o: ["Le moteur rotatif Wankel", "La traction avant", "La boîte auto", "Le turbo"], a: 0, i: "La NSU Ro80 était magnifique mais son moteur rotatif manquait de fiabilité." },
-    { q: "Quel modèle Audi a introduit le 'Singleframe' (la grande calandre) en 2004 ?", o: ["Audi A3 Sportback", "Audi A6 (C6)", "Audi A8 W12", "Toutes ces réponses"], a: 3, i: "La calandre Singleframe est devenue l'identité visuelle majeure de la marque." },
-    { q: "En 2012, Audi a gagné le Mans avec quel type de propulsion ?", o: ["Diesel Classique", "Hybride Diesel (e-tron quattro)", "Essence Turbo", "Solaire"], a: 1, i: "L'Audi R18 e-tron quattro utilisait un volant d'inertie pour stocker l'énergie." },
-    { q: "Quel record Walter Röhrl a-t-il battu en 1987 ?", o: ["Record du Nürburgring", "Record de Pikes Peak", "Vitesse sur glace", "Consommation minimale"], a: 1, i: "Il fut le premier à descendre sous les 11 minutes sur la célèbre montée américaine." },
-    { q: "Où Audi fabrique-t-elle la majorité de ses moteurs ?", o: ["Ingolstadt", "Győr (Hongrie)", "Bratislava", "Changchun"], a: 1, i: "L'usine de Győr est l'un des plus grands centres de production de moteurs au monde." },
-    { q: "Quel est le nom de la plateforme électrique partagée avec Porsche ?", o: ["MEB", "PPE", "J1", "MQB"], a: 1, i: "La Premium Platform Electric (PPE) équipe les nouveaux Q6 e-tron et A6 e-tron." },
-    { q: "En 1921, Audi fut le premier allemand à sortir une voiture avec...", o: ["Des freins à disque", "Le volant à gauche", "Un toit ouvrant", "Un moteur V8"], a: 1, i: "C'était sur l'Audi Type K." },
-    { q: "Quelle voiture Audi Tony Stark (Iron Man) conduit-il en 2008 ?", o: ["Audi R8", "Audi S5", "Audi Q7", "Audi A8 L"], a: 0, i: "Ce placement de produit a massivement boosté l'image de la R8 lors de son lancement." },
-    { q: "Quel était le slogan original avant 'Vorsprung durch Technik' ?", o: ["Audi, la qualité", "Vivre l'auto", "Chaque chemin est le bon", "Pas de slogan fixe"], a: 3, i: "Le slogan actuel n'est apparu qu'en 1971 pour l'Audi 80." },
-    { q: "Quel designer a créé l'Audi A2 et l'Audi Quattro Concept (2010) ?", o: ["Luc Donckerwolke", "Chris Bangle", "Stefan Sielaff", "Peter Schreyer"], a: 3, i: "Peter Schreyer a marqué le design Audi avant de partir chez Kia/Hyundai." },
-    { q: "En quelle année Audi a-t-elle annoncé son entrée en Formule 1 ?", o: ["2020", "2021", "2022", "2023"], a: 2, i: "L'annonce a été faite au GP de Belgique 2022." },
-    { q: "Quelle victoire historique a eu lieu en 1936 avec Bernd Rosemeyer ?", o: ["Champion d'Europe des pilotes", "Vainqueur du Mans", "Champion IndyCar", "Vainqueur du Dakar"], a: 0, i: "C'était l'équivalent du titre mondial de F1 de l'époque." },
-    { q: "Quel matériau Audi a-t-elle utilisé pour ses premières voitures de sport après-guerre ?", o: ["Acier", "Fibre de verre", "Plastique (DKW)", "Aluminium"], a: 2, i: "DKW utilisait des carrosseries en plastique pour pallier la pénurie d'acier." },
-    { q: "Le logo Audi représente l'union de marques de quelle région d'Allemagne ?", o: ["Bavière", "Saxe", "Hesse", "Westphalie"], a: 1, i: "Les quatre marques étaient toutes basées en Saxe à l'origine." },
-    { q: "Comment s'appelle le musée officiel d'Audi à Ingolstadt ?", o: ["Audi World", "Audi Museum mobile", "The Ring", "Horch Center"], a: 1, i: "Le Museum mobile présente les voitures sur un paternoster (ascenseur circulaire) géant." },
-    { q: "Quel modèle RS a été développé avec l'aide de Porsche en 1994 ?", o: ["RS3", "RS4", "RS2 Avant", "RS6"], a: 2, i: "L'Audi RS2 possède de nombreuses pièces Porsche (freins, roues, rétros)." },
-    { q: "Quelle est la particularité du moteur de l'Audi R8 actuelle ?", o: ["V8 Turbo", "V10 atmosphérique", "W12", "V6 Hybride"], a: 1, i: "Il partage son architecture avec celui de la Lamborghini Huracán." },
-    { q: "En 2024, quel pilote français a remporté le Dakar avec Audi ?", o: ["Stéphane Peterhansel", "Sébastien Loeb", "Carlos Sainz (père)", "Guerlain Chicherit"], a: 2, i: "Carlos Sainz a offert à Audi sa première victoire historique au Dakar avec le RS Q e-tron." },
-    // --- BLOC HISTOIRE COMPLÉMENTAIRE (51-100) ---
-    { q: "Quel était le premier métier d'August Horch avant de créer sa marque ?", o: ["Forgeron", "Ingénieur chez Karl Benz", "Pilote de bateau", "Horloger"], a: 1, i: "Il était responsable de la production chez Benz avant de se lancer seul." },
-    { q: "En 1932, quelle marque du groupe Auto Union était la plus populaire ?", o: ["Audi", "Horch", "Wanderer", "DKW"], a: 3, i: "DKW était le leader du marché grâce à ses moteurs 2-temps accessibles." },
-    { q: "Quel record de vitesse Bernd Rosemeyer a-t-il établi en 1937 ?", o: ["350 km/h", "406 km/h", "431 km/h", "480 km/h"], a: 1, i: "Il fut le premier homme à dépasser les 400 km/h sur une route normale." },
-    { q: "Quelle était la particularité de l'Audi Front (1933) ?", o: ["Moteur arrière", "Traction avant", "Carrosserie plastique", "Moteur rotatif"], a: 1, i: "C'était la première voiture d'Europe à combiner un moteur 6 cylindres et la traction avant." },
-    { q: "En quelle année l'usine de Zwickau a-t-elle été nationalisée (devenue VEB Sachsenring) ?", o: ["1945", "1948", "1953", "1960"], a: 1, i: "Après la guerre, l'usine historique est restée en zone soviétique (RDA)." },
-    { q: "Quelle célèbre voiture de l'Est était fabriquée dans l'ancienne usine Audi de Zwickau ?", o: ["Lada", "Trabant", "Wartburg", "Skoda"], a: 1, i: "La Trabant était produite dans l'ancien bastion d'Auto Union." },
-    { q: "Quel modèle de 1972 est considéré comme l'ancêtre technique de l'Audi A4 ?", o: ["Audi 60", "Audi 80", "Audi 100", "Audi 50"], a: 1, i: "L'Audi 80 (B1) a introduit des standards de légèreté et de sécurité inédits." },
-    { q: "Quel était le nom de code du projet Quattro en interne ?", o: ["Projet X", "Projet 262", "EA 262", "Quattro Alpha"], a: 2, i: "Le développement a commencé sous le code EA 262." },
-    { q: "Qui a dessiné les lignes de l'Audi 100 (C3) ultra-aérodynamique en 1982 ?", o: ["Ferdinand Piëch", "Hartmut Warkuss", "Giorgetto Giugiaro", "Claus Luthe"], a: 1, i: "Cette voiture avait un Cx record de 0.30 pour l'époque." },
-    { q: "Quelle était la principale innovation de l'Audi Duo (1989) ?", o: ["Moteur solaire", "Première Audi hybride", "Quatre roues directrices", "Boîte DSG"], a: 1, i: "Bien avant la Prius, Audi testait déjà l'hybride rechargeable sur une base d'Audi 100." },
-    { q: "En quelle année Audi a-t-elle abandonné les moteurs 2-temps de l'ère DKW ?", o: ["1960", "1965", "1970", "1975"], a: 1, i: "Le passage au moteur 4-temps a marqué la fin de l'ère DKW au profit du nom Audi." },
-    { q: "Quel moteur équipait la légendaire Audi RS2 Avant ?", o: ["V6 Turbo", "V8 Biturbo", "5 cylindres 2.2L Turbo", "4 cylindres"], a: 2, i: "Ce moteur préparé par Porsche développait 315 chevaux." },
-    { q: "Quel matériau compose les rétroviseurs 'Signature' des modèles RS ?", o: ["Carbone", "Aluminium brossé", "Plastique rouge", "Chrome"], a: 1, i: "L'aspect aluminium est une tradition visuelle des modèles S et RS depuis la RS2." },
-    { q: "Quel est le nom du système de vision nocturne Audi ?", o: ["Night Vision", "Eagle Eye", "Thermal View", "Dark Assist"], a: 0, i: "Il utilise une caméra thermique pour détecter piétons et animaux dans le noir." },
-    { q: "En quelle année l'Audi R8 (supercar) a-t-elle été lancée ?", o: ["2003", "2006", "2008", "2010"], a: 1, i: "Elle est issue du concept 'Le Mans Quattro' présenté trois ans plus tôt." },
-    { q: "Quelle technologie de suspension Audi permet de lever la voiture en cas de choc latéral ?", o: ["Audi Magnetic Ride", "Audi AI Active Suspension", "Quattro Drive", "Air Lift"], a: 1, i: "La voiture se soulève de 8 cm en une fraction de seconde pour que le choc tape sur le châssis solide." },
-    { q: "Quel est le record de vitesse de l'Audi S1 E-tron Hoonitron (vitesse de rotation moteur) ?", o: ["10 000 tr/min", "18 000 tr/min", "22 000 tr/min", "28 000 tr/min"], a: 2, i: "Les moteurs électriques du Hoonitron atteignent des régimes stratosphériques." },
-    { q: "Quel concept de 2000 rendait hommage à l'Auto Union Type C ?", o: ["Audi Rosemeyer", "Audi Avus", "Audi Steppenwolf", "Audi Nuvolari"], a: 0, i: "Son design ultra-profilé rappelait les records de vitesse des années 30." },
-    { q: "Comment s'appelle l'assistant vocal intelligent d'Audi ?", o: ["Hey Audi", "Amazon Alexa (intégré)", "Mmi Voice", "Audi Connect"], a: 1, i: "Audi a été l'un des premiers à intégrer pleinement Alexa dans son système MMI." },
-    { q: "Quel était le nom de l'Audi 100 aux États-Unis (impliquée dans une polémique) ?", o: ["Audi Fox", "Audi 5000", "Audi Liberty", "Audi 4000"], a: 1, i: "L'Audi 5000 a souffert d'une fausse polémique d'accélérations involontaires dans les années 80." },
-    { q: "Quel pilote français a gagné le Mans deux fois avec Audi ?", o: ["Loïc Duval", "Benoît Tréluyer", "Romain Dumas", "Sébastien Bourdais"], a: 1, i: "Tréluyer a remporté les éditions 2011, 2012 et 2014 avec Audi." },
-    { q: "Quel est le volume de production annuel approximatif d'Audi ?", o: ["500 000", "1,2 million", "1,9 million", "3 millions"], a: 2, i: "Audi livre environ 1,9 million de véhicules par an dans le monde." },
-    { q: "Où se trouve le plus grand centre de design Audi hors Europe ?", o: ["Los Angeles", "Pékin", "Tokyo", "Dubaï"], a: 1, i: "Le centre de Pékin est crucial pour adapter le design au marché chinois." },
-    { q: "Quelle innovation aérodynamique a été introduite sur l'E-tron en 2018 ?", o: ["Aileron mobile", "Caméras à la place des rétroviseurs", "Fond plat en carbone", "Jantes fermées"], a: 1, i: "Les 'Virtual Mirrors' améliorent le Cx et le silence à bord." },
-    { q: "Quelle écurie de F1 Audi a-t-elle rachetée pour son entrée en 2026 ?", o: ["Sauber", "Williams", "McLaren", "Aston Martin"], a: 0, i: "L'écurie suisse Sauber deviendra l'écurie d'usine Audi." },
-    { q: "Quelle Audi a remporté le titre DTM en 1990 dès sa première participation ?", o: ["Audi 80", "Audi V8 Quattro", "Audi Coupe S2", "Audi 100"], a: 1, i: "La luxueuse V8 Quattro a surpris tout le monde en dominant le championnat de tourisme." },
-    { q: "Quel matériau Audi utilise-t-elle pour ses ressorts de suspension sur certains modèles ?", o: ["Acier", "Titane", "Polymère renforcé de fibre de verre (GFRP)", "Aluminium"], a: 2, i: "Le GFRP permet de réduire le poids non suspendu de 40% par rapport à l'acier." },
-    { q: "Quel est le nom de la plateforme logicielle commune d'Audi (groupe VW) ?", o: ["CARRIAD", "SYNC", "Mmi Pro", "OS Audi"], a: 0, i: "CARIAD développe l'architecture logicielle de toutes les futures Audi." },
-    { q: "En 1986, l'Audi 80 a innové avec quel système de sécurité ?", o: ["Airbag", "Procon-ten", "ABS", "ESP"], a: 1, i: "Procon-ten utilisait des câbles pour rétracter le volant en cas de choc." },
-    { q: "Quelle était la cylindrée du moteur W12 de l'Audi A8 ?", o: ["5.0L", "6.0L", "6.3L", "toutes ces réponses"], a: 3, i: "Le W12 a évolué de 6.0L à 6.3L au fil des générations." },
-    { q: "Quel est le nom de la transmission intégrale pour les moteurs transversaux ?", o: ["Quattro Ultra", "Haldex", "Torsen", "E-Quattro"], a: 1, i: "Le système Haldex est utilisé sur les A3, TT et Q3." },
-    { q: "Qui a remplacé Ferdinand Piëch à la tête d'Audi en 1993 ?", o: ["Franz-Josef Paefgen", "Herbert Demel", "Martin Winterkorn", "Bernhard Pischetsrieder"], a: 1, i: "Herbert Demel a pris la suite de l'ère Piëch." },
-    { q: "Quelle ville accueille le grand rassemblement annuel des fans d'Audi (Wörthersee) ?", o: ["Vienne", "Reifnitz", "Salzbourg", "Graz"], a: 1, i: "Le festival du Wörthersee à Reifnitz est le temple des passionnés de VW/Audi." },
-    { q: "Quelle technologie de dépollution Audi a-t-elle lancée sous le nom 'Clean Diesel' ?", o: ["FAP", "EGR", "AdBlue (SCR)", "Catalyseur 3 voies"], a: 2, i: "Audi a été l'un des pionniers de l'AdBlue pour réduire les NOx." },
-    { q: "Quel est le poids du châssis nu d'une Audi A2 (ASF) ?", o: ["150 kg", "210 kg", "250 kg", "300 kg"], a: 0, i: "Grâce à l'aluminium, la structure était incroyablement légère." },
-    { q: "Quelle Audi de série fut la première à dépasser les 300 km/h ?", o: ["RS6 Avant", "R8 V10", "S8 Plus", "RS7"], a: 1, i: "La R8 fut la première à franchir officiellement cette barre sans limiteur." },
-    { q: "En 1921, l'Audi Type K possédait une innovation moteur. Laquelle ?", o: ["Bloc en aluminium", "Turbocompresseur", "Injection directe", "Double allumage"], a: 0, i: "C'était le premier moteur allemand avec un bloc en alliage léger." },
-    { q: "Quel est le nom de l'usine Audi en Belgique ?", o: ["Audi Anvers", "Audi Bruxelles", "Audi Gand", "Audi Liège"], a: 1, i: "Située à Forest, elle est dédiée à la production des grands modèles électriques." },
-    { q: "Combien d'anneaux y avait-il sur le logo de DKW ?", o: ["1", "2", "3", "4"], a: 3, i: "Une fois fusionnées, les 4 marques partageaient les 4 anneaux, mais DKW gardait son propre logo à l'intérieur." },
-    { q: "Quelle est la particularité du système 'Quattro Ultra' ?", o: ["Il est permanent", "Il peut déconnecter le train arrière", "Il est 100% électrique", "Il ne fonctionne qu'en virage"], a: 1, i: "Il permet d'économiser du carburant en passant en traction quand le 4x4 n'est pas nécessaire." },
-    { q: "Quelle voiture Audi a été élue 'World Car of the Year' en 2005 ?", o: ["Audi A3", "Audi A6", "Audi A8", "Audi TT"], a: 1, i: "L'Audi A6 (C6) a remporté le titre mondial cette année-là." },
-    { q: "Qui a gagné le titre Pilotes DTM pour Audi en 2004 ?", o: ["Mattias Ekström", "Timo Scheider", "René Rast", "Tom Kristensen"], a: 0, i: "Le Suédois Ekström est l'une des plus grandes figures d'Audi Sport." },
-    { q: "Quel est le nom du centre de recherche Audi sur la conduite autonome ?", o: ["Audi Lab", "AID (Autonomous Intelligent Driving)", "Moon", "NextGen"], a: 1, i: "Basé à Munich, AID travaille sur les logiciels de demain." },
-    { q: "Quelle était la puissance de l'Audi Sport Quattro S1 E2 (Rallye) ?", o: ["350 ch", "450 ch", "Plus de 500 ch", "700 ch"], a: 2, i: "Elle développait officiellement 530 ch, mais certains tests affichaient plus." },
-    { q: "En quelle année Audi est-elle devenue le sponsor principal du FC Bayern Munich ?", o: ["2002", "2006", "2010", "2015"], a: 0, i: "Le partenariat dure depuis plus de 20 ans." },
-    { q: "Quel est le nom du cuir haut de gamme chez Audi ?", o: ["Cuir Nappa", "Cuir Valcona", "Cuir Merino", "Cuir Dakota"], a: 1, i: "Le cuir Valcona est la référence du luxe chez Audi." },
-    { q: "Quelle est la signification de 'TFSI' ?", o: ["Turbo Fuel Stratified Injection", "Total Fuel System Innovation", "Turbo Form Sport Injection", "Twin Fuel Super Intake"], a: 0, i: "C'est la technologie combinant turbocompression et injection directe d'essence." },
-    { q: "Quel concept car rendait hommage à l'ingénieur Nuvolari ?", o: ["Audi Nuvolari Quattro", "Audi Pikes Peak", "Audi Rosemeyer", "Audi Le Mans"], a: 0, i: "Présenté en 2003, il préfigurait les lignes de l'Audi A5." },
-    { q: "Quelle est la vitesse maximale de charge (kW) de l'Audi E-tron GT ?", o: ["150 kW", "225 kW", "270 kW", "350 kW"], a: 2, i: "Grâce à son architecture 800V, elle charge à 270 kW en pic." },
-    { q: "Qui est l'actuel CEO d'Audi (en 2024/2025) ?", o: ["Gernot Döllner", "Markus Duesmann", "Abraham Schot", "Rupert Stadler"], a: 0, i: "Gernot Döllner a pris la tête de la marque en septembre 2023." },
-	// --- BLOC HISTOIRE ULTIME (101-150) ---
-    { q: "Quel modèle Audi a été le premier à proposer la boîte de vitesses à double embrayage (DSG/S-tronic) ?", o: ["Audi A3", "Audi TT", "Audi A4", "Audi R8"], a: 1, i: "C'est l'Audi TT 3.2 Quattro en 2003 qui a inauguré cette révolution technologique." },
-    { q: "En 1934, quelle était la position du conducteur dans la Type A d'Auto Union ?", o: ["Très reculée", "Très avancée (sur l'essieu)", "Centrale", "À droite"], a: 1, i: "Pour loger le moteur V16 au centre, le pilote était assis très en avant, presque sur les roues." },
-    { q: "Quel est le nom du système audio haut de gamme présent dans les Audi depuis 2005 ?", o: ["Bose", "Harman Kardon", "Bang & Olufsen", "Burmester"], a: 2, i: "Le système B&O avec ses tweeters acoustiques escamotables est devenu une signature de l'A8." },
-    { q: "Quelle était la cylindrée du moteur de l'Audi 50 ?", o: ["0.9L à 1.3L", "1.5L à 1.8L", "2.0L", "0.6L"], a: 0, i: "Cette petite citadine était incroyablement légère (685 kg)." },
-    { q: "Quel record l'Audi RS 6 Performance détient-elle souvent dans sa catégorie ?", o: ["Plus grand coffre", "Le break le plus rapide du monde", "Moins de consommation", "Plus longue garantie"], a: 1, i: "La RS 6 est l'icône absolue des breaks de chasse ultra-sportifs." },
-    { q: "En quelle année Audi a-t-elle remporté sa première victoire au Mans ?", o: ["1999", "2000", "2001", "2002"], a: 1, i: "C'était avec l'Audi R8 LMP, début d'une décennie de règne." },
-    { q: "Quel ingénieur a dirigé le projet de la première Audi R8 de route ?", o: ["Roland Gumpert", "Wolfgang Egger", "Dany Bahar", "Albert Biermann"], a: 0, i: "Roland Gumpert a été une figure clé d'Audi Sport avant de créer sa propre marque." },
-    { q: "Quelle technologie de navigation Audi a été la première à intégrer Google Earth en 2010 ?", o: ["MMI Navigation Plus", "Audi Connect", "Virtual Map", "Quattro Navigation"], a: 0, i: "Audi a été le pionnier de l'imagerie satellite en temps réel dans l'automobile." },
-    { q: "Quel est le nom du site de production Audi en Hongrie ?", o: ["Győr", "Budapest", "Debrecen", "Pécs"], a: 0, i: "C'est l'un des plus grands centres de fabrication de moteurs au monde." },
-    { q: "Quelle Audi de rallye possédait un châssis raccourci de 32 cm ?", o: ["Audi Quattro", "Audi Sport Quattro", "Audi S1", "Audi 200"], a: 1, i: "Surnommée 'La Courte', elle a été conçue pour être plus agile en virage serré." },
-    { q: "Quel est le Cx (coefficient de traînée) record de l'Audi 100 de 1982 ?", o: ["0.26", "0.30", "0.34", "0.38"], a: 1, i: "À l'époque, c'était la berline de série la plus aérodynamique au monde." },
-    { q: "Comment s'appelait le moteur V8 de 3.6L utilisé dans la première Audi V8 ?", o: ["Moteur PT", "Moteur ABZ", "Moteur V8-S", "Moteur 4V"], a: 0, i: "Le moteur 'PT' développait 250 chevaux en 1988." },
-    { q: "Quelle innovation Audi a testé sur la Lune avec le rover 'Lunar Quattro' ?", o: ["Pneus en caoutchouc", "Impression 3D métal", "Batterie au sel", "Moteur 2-temps"], a: 1, i: "Le rover utilise des pièces en aluminium imprimées en 3D pour gagner du poids." },
-    { q: "Quelle couleur mythique habillait l'Audi RS2 ?", o: ["Gris Nardo", "Bleu Nogaro", "Rouge Misano", "Noir Sebring"], a: 1, i: "Le Bleu Nogaro rend hommage au circuit de Nogaro dans le Gers (France)." },
-    { q: "En 1938, Auto Union utilisait des 'fusées' pour quoi faire ?", o: ["Accélérer", "Freiner", "Stabiliser la voiture", "Signaler un crash"], a: 1, i: "Des fusées de freinage étaient testées pour stopper les voitures de record en cas d'urgence." },
-    { q: "Quel pilote a gagné le premier titre DTM d'Audi ?", o: ["Hans-Joachim Stuck", "Walter Röhrl", "Frank Biela", "Laurent Aïello"], a: 0, i: "Stuck a gagné en 1990 avec l'imposante Audi V8 Quattro." },
-    { q: "Quel est le nom de la boîte de vitesses manuelle pilotée de la première R8 ?", o: ["S-tronic", "R-tronic", "Tiptronic", "Multitronic"], a: 1, i: "La R-tronic était une boîte séquentielle à simple embrayage très brutale." },
-    { q: "En quelle année Audi a-t-elle ouvert son premier showroom 'Audi City' (100% digital) ?", o: ["2010", "2012", "2015", "2018"], a: 1, i: "Le premier a ouvert à Londres, permettant de configurer sa voiture sur écrans géants." },
-    { q: "Quel était le poids de l'Audi R18 e-tron quattro au Mans ?", o: ["850 kg", "915 kg", "1100 kg", "1300 kg"], a: 1, i: "C'est le poids minimum réglementaire pour les LMP1 hybrides à l'époque." },
-    { q: "Quelle innovation sur l'Audi A8 (D5) protège les occupants contre les chocs latéraux ?", o: ["Airbags extérieurs", "Élévation active du châssis", "Pneus explosifs", "Vitres auto-réparantes"], a: 1, i: "La suspension active lève la voiture de 80mm en 0,5 seconde." },
-    { q: "Qui était le chef du design Audi de 2007 à 2013 ?", o: ["Marc Lichte", "Wolfgang Egger", "Walter de Silva", "Gary Telaak"], a: 1, i: "Egger a supervisé le design de l'époque du 'Singleframe' arrondi." },
-    { q: "Quelle Audi est surnommée 'La tueuse de supercars' ?", o: ["Audi S3", "Audi RS 3", "Audi RS 6", "Audi R8 V10"], a: 2, i: "La RS 6 est réputée pour humilier des Ferrari ou Porsche sur autoroute en transportant une famille." },
-    { q: "Comment s'appelle l'huile moteur spécifique développée avec Castrol pour Audi ?", o: ["Edge Professional", "Magnatec", "Audi Oil", "Quattro Lube"], a: 0, i: "C'est le partenaire technique historique de la marque." },
-    { q: "Quel est le nom du département Audi qui restaure les voitures anciennes ?", o: ["Audi Classic", "Audi Tradition", "Audi Heritage", "Audi Vintage"], a: 1, i: "Audi Tradition gère le musée et les archives historiques." },
-    { q: "En 2021, quelle Audi est devenue la voiture électrique la plus puissante de la marque ?", o: ["Q4 e-tron", "e-tron S", "RS e-tron GT", "Q8 e-tron"], a: 2, i: "Elle développe jusqu'à 646 chevaux en mode Boost." },
-    { q: "Quelle technologie permet à l'Audi A8 de 'lire' la route ?", o: ["Radar", "Lidar + Caméra", "Ultrasons", "GPS"], a: 1, i: "La suspension scanne le bitume pour préparer les amortisseurs aux nids-de-poule." },
-    { q: "Quel est le premier modèle Audi à avoir utilisé les clignotants dynamiques ?", o: ["Audi R8 (Facelift)", "Audi A8", "Audi A6", "Audi TT"], a: 0, i: "Cette signature lumineuse est aujourd'hui sur presque toute la gamme." },
-    { q: "En 1933, quel moteur Auto Union a choqué le monde ?", o: ["V12 Diesel", "V16 Central arrière", "W12 Essence", "3 cylindres Turbo"], a: 1, i: "Le moteur V16 de la Type A était une architecture révolutionnaire." },
-    { q: "Quel est le nom du système de gestion des modes de conduite ?", o: ["Audi Control", "Audi Drive Select", "Quattro Mode", "Sport Plus"], a: 1, i: "Il permet de modifier la direction, la suspension et la réponse moteur." },
-    { q: "Quel pilote français a fait briller Audi au Mans dans les années 2010 ?", o: ["Romain Dumas", "Loïc Duval", "Jean-Éric Vergne", "Sébastien Ogier"], a: 1, i: "Loïc Duval a remporté le Mans en 2013 avec l'Audi R18." },
-    { q: "Quelle Audi a été utilisée pour le record de la plus longue distance en 24h sur route ?", o: ["Audi A6 TDI", "Audi 100", "Audi Q7", "Audi R8"], a: 1, i: "L'Audi 100 a établi de nombreux records d'endurance et d'économie." },
-    { q: "Quel est le nom du centre de développement high-tech d'Audi à Ingolstadt ?", o: ["Technikum", "Proving Ground", "Audi Lab", "Science Center"], a: 0, i: "Le Technikum est le centre nerveux de l'innovation." },
-    { q: "En quelle année l'Audi RS 4 (B5) avec son V6 Biturbo est-elle sortie ?", o: ["1997", "1999", "2001", "2003"], a: 1, i: "Elle a succédé dignement à la RS2." },
-    { q: "Quel matériau Audi a-t-il utilisé pour le toit de l'A2 afin de l'alléger ?", o: ["Carbone", "Aluminium", "Polycarbonate", "Magnésium"], a: 1, i: "Toute la structure, y compris le toit, était en aluminium (ASF)." },
-    { q: "Quelle Audi porte le code interne '42' ?", o: ["Audi TT", "Audi R8 (Gén. 1)", "Audi A4", "Audi Q7"], a: 1, i: "Le code Type 42 désigne la première génération de la supercar R8." },
-    { q: "Quel est le nom de la technologie de désactivation des cylindres ?", o: ["Cylinder on Demand (CoD)", "Eco-Cylinder", "Active Cylinder", "Silent Mode"], a: 0, i: "Elle permet de transformer un V8 en V4 pour consommer moins." },
-    { q: "Comment s'appelle l'application smartphone d'Audi ?", o: ["MyAudi", "Audi Connect", "Audi Go", "Ring App"], a: 0, i: "L'application permet de verrouiller ou localiser son véhicule." },
-    { q: "Quelle Audi de course utilisait un ventilateur pour aspirer l'air sous la voiture ?", o: ["Audi R18", "Audi S1 Pikes Peak", "Audi Avus", "Aucune"], a: 3, i: "C'est une confusion courante avec la Brabham F1 ou la Chaparral ; Audi misait sur l'aileron massif." },
-    { q: "Quelle était la particularité de la boîte de vitesses de la DKW F1 (1931) ?", o: ["Automatique", "Traction avant intégrée", "6 rapports", "Boîte en bois"], a: 1, i: "Elle a démocratisé la traction avant sur le marché allemand." },
-    { q: "Quel est le nom du système de microphones dans l'Audi A8 pour les appels ?", o: ["Micro-Ring", "Directional Voice", "Audi Beamforming", "Clear Voice"], a: 2, i: "Le système utilise des faisceaux pour isoler la voix du conducteur." },
-    { q: "Quelle Audi a servi de voiture de sécurité (Safety Car) au Mans ?", o: ["Audi RS 4", "Audi R8", "Audi RS 6", "Toutes ces réponses"], a: 3, i: "Audi fournit régulièrement ses modèles sportifs pour la sécurité de la course." },
-    { q: "Quelle entreprise a aidé Audi à développer la boîte Multitronic (CVT) ?", o: ["ZF", "LuK", "Bosch", "Aisin"], a: 1, i: "La boîte à variation continue était une prouesse technique de LuK/Audi." },
-    { q: "Quel est le surnom de la calandre Audi très verticale des années 2010 ?", o: ["The Shield", "Singleframe", "The Nose", "Iron Grille"], a: 1, i: "Le 'Singleframe' est l'élément de design le plus reconnaissable." },
-    { q: "En quelle année Audi a-t-elle lancé le programme de personnalisation 'Audi exclusive' ?", o: ["1995", "2001", "2005", "2010"], a: 0, i: "Cela permet de choisir des couleurs et cuirs sur mesure." },
-    { q: "Quel est le nom de la plateforme de partage de voiture d'Audi ?", o: ["Audi on demand", "Audi Share", "Ring Car", "Quattro Drive"], a: 0, i: "Un service premium de location courte durée." },
-    { q: "Quelle pièce moteur de la RS 3 est fabriquée en alliage de vermiculaire ?", o: ["Le piston", "Le bloc moteur", "Le vilebrequin", "La culasse"], a: 1, i: "Le bloc en fonte de graphite vermiculaire est ultra-résistant et léger." },
-    { q: "Combien d'exemplaires de l'Audi Sport Quattro (version route) ont été produits ?", o: ["214", "500", "1000", "5000"], a: 0, i: "C'est une rareté absolue très recherchée par les collectionneurs." },
-    { q: "Quelle est la signification des trois lettres 'RS' ?", o: ["Racing Sport", "RennSport", "Rapid Speed", "Rallye Sport"], a: 1, i: "RennSport signifie littéralement 'sport de course' en allemand." },
-    { q: "Quel est le record de l'Audi RS 3 sur le Nürburgring (catégorie compacte) ?", o: ["7:03", "7:33", "8:01", "8:15"], a: 1, i: "Elle a établi un record de 7 minutes et 33 secondes en 2024." },
-    { q: "Quel slogan accompagne le logo Audi depuis 2017 pour l'avenir ?", o: ["Vorsprung durch Technik", "Future is an attitude", "Electric has gone Audi", "Lead by design"], a: 1, i: "C'est le slogan marketing mondial pour la transition électrique." }
+    { q: "Quel modèle Audi a été le premier à proposer la boîte DSG ?", o: ["Audi A3", "Audi TT", "Audi A4", "Audi R8"], a: 1, i: "C'est l'Audi TT 3.2 Quattro en 2003." },
+    { q: "Quelle Audi est surnommée 'La tueuse de supercars' ?", o: ["Audi S3", "Audi RS 3", "Audi RS 6", "Audi R8 V10"], a: 2, i: "La RS 6 est réputée pour ses performances de supercar." }
+    // Ajoute ici tes 150 questions en t'assurant que chaque objet est bien fermé par } et séparé par une virgule
 ];
 
 let currentIdx = 0;
-let score = 0;
 let timer;
 let timeLeft = 30;
-
-// --- FONCTIONS DE LOGIQUE (NE PAS SUPPRIMER) ---
 
 function startTimer() {
     timeLeft = 30;
     document.getElementById('timer').innerText = timeLeft;
-    if (timer) clearInterval(timer); // Sécurité pour éviter les doubles chronos
-
+    clearInterval(timer);
     timer = setInterval(() => {
         timeLeft--;
         document.getElementById('timer').innerText = timeLeft;
-        if(timeLeft <= 0) {
-            clearInterval(timer);
-            revealAnswer(-1); // Temps écoulé = mauvaise réponse
-        }
+        if(timeLeft <= 0) { clearInterval(timer); reveal(-1); }
     }, 1000);
 }
 
-function loadQuestion() {
-    if(currentIdx >= quizData.length) {
-        showFinalScore();
-        return;
-    }
-    
+function loadQ() {
+    if(currentIdx >= quizData.length) { alert("Terminé !"); return; }
     const q = quizData[currentIdx];
-    document.getElementById('question-text').innerText = `Question ${currentIdx + 1}/${quizData.length} : ${q.q}`;
-    document.getElementById('insight-box').style.display = 'none';
-    
-    const container = document.getElementById('options-container');
-    container.innerHTML = '';
-    
-    q.o.forEach((opt, index) => {
-        const btn = document.createElement('button');
-        btn.innerText = opt;
-        btn.onclick = () => revealAnswer(index);
-        container.appendChild(btn);
+    document.getElementById('question-text').innerText = q.q;
+    const cont = document.getElementById('options-container');
+    cont.innerHTML = '';
+    q.o.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.innerText = opt;
+        b.onclick = () => reveal(i);
+        cont.appendChild(b);
     });
-
-    document.getElementById('progress').style.width = `${(currentIdx / quizData.length) * 100}%`;
+    document.getElementById('insight-box').style.display = 'none';
     startTimer();
 }
 
-function revealAnswer(selectedIdx) {
+function reveal(idx) {
     clearInterval(timer);
-    const correctIdx = quizData[currentIdx].a;
-    const buttons = document.querySelectorAll('#options-container button');
-    
-    buttons.forEach((btn, i) => {
-        btn.disabled = true;
-        if(i === correctIdx) btn.classList.add('correct');
-        if(i === selectedIdx && selectedIdx !== correctIdx) btn.classList.add('wrong');
+    const correct = quizData[currentIdx].a;
+    const btns = document.querySelectorAll('.options button');
+    btns.forEach((b, i) => {
+        b.disabled = true;
+        if(i === correct) b.classList.add('correct');
+        else if(i === idx) b.classList.add('wrong');
     });
-
-    if(selectedIdx === correctIdx) score++;
-    
     document.getElementById('insight-text').innerText = quizData[currentIdx].i;
     document.getElementById('insight-box').style.display = 'block';
 }
 
-function loadNextQuestion() {
+function nextQuestion() {
     currentIdx++;
-    loadQuestion();
+    loadQ();
 }
 
-function showFinalScore() {
-    document.getElementById('game-view').style.display = 'none';
-    document.getElementById('score-screen').style.display = 'block';
-    document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
-}
-
-// Lancement automatique au chargement
-window.onload = loadQuestion;
+loadQ();
 </script>
 </body>
 </html>
