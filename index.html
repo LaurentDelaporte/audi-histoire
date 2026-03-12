@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audi Heritage | 125 Ans d'Histoire</title>
+    <title>Audi Heritage | 150 Questions d'Histoire</title>
     <style>
         :root {
             --audi-silver: #a0a0a0;
@@ -35,7 +35,7 @@
     <div id="game-view">
         <div id="timer">30</div>
         <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-        <div id="question-text" class="question">Ouverture des archives d'Ingolstadt...</div>
+        <div id="question-text" class="question">Chargement de l'histoire...</div>
         <div id="options-container" class="options"></div>
         <div id="insight-box">
             <h4 style="margin:0 0 10px 0; color:var(--audi-red); text-transform: uppercase; font-size: 0.8rem;">Note Historique</h4>
@@ -46,7 +46,6 @@
 
     <div id="score-screen">
         <h1 style="font-size: 2.5rem; letter-spacing: 3px;">ANALYSE TERMINÉE</h1>
-        <p style="color: var(--audi-silver);">Votre niveau d'expertise historique :</p>
         <p id="final-score" style="font-size: 5rem; margin: 20px 0; font-weight: bold; color: var(--audi-red);"></p>
         <button onclick="location.reload()" style="background: white; color: black; border:none; padding: 15px 40px; font-weight: bold; cursor: pointer;">RECOMMENCER</button>
     </div>
@@ -208,54 +207,26 @@ const quizData = [
     { q: "Quel slogan accompagne le logo Audi depuis 2017 pour l'avenir ?", o: ["Vorsprung durch Technik", "Future is an attitude", "Electric has gone Audi", "Lead by design"], a: 1, i: "C'est le slogan marketing mondial pour la transition électrique." }
 ];
 
-];
-
 let currentIdx = 0;
 let score = 0;
 let timer;
 let timeLeft = 30;
 
+// --- FONCTIONS DE LOGIQUE (NE PAS SUPPRIMER) ---
+
 function startTimer() {
-    // On réinitialise le temps à 30
     timeLeft = 30;
     document.getElementById('timer').innerText = timeLeft;
-    
-    // On nettoie l'ancien intervalle s'il existe pour éviter les accélérations
-    if (timer) clearInterval(timer);
+    if (timer) clearInterval(timer); // Sécurité pour éviter les doubles chronos
 
     timer = setInterval(() => {
         timeLeft--;
-        
-        // Mise à jour de l'affichage
-        const timerDisplay = document.getElementById('timer');
-        if(timerDisplay) {
-            timerDisplay.innerText = timeLeft;
-        }
-
+        document.getElementById('timer').innerText = timeLeft;
         if(timeLeft <= 0) {
             clearInterval(timer);
-            revealAnswer(-1); // Force la révélation si le temps est écoulé
+            revealAnswer(-1); // Temps écoulé = mauvaise réponse
         }
-    }, 1000); // 1000ms = 1 seconde
-}
-
-function revealAnswer(selectedIdx) {
-    // IMPORTANT : On arrête le chrono dès qu'on clique
-    clearInterval(timer); 
-    
-    const correctIdx = quizData[currentIdx].a;
-    const buttons = document.querySelectorAll('#options-container button');
-    
-    buttons.forEach((btn, i) => {
-        btn.disabled = true;
-        if(i === correctIdx) btn.classList.add('correct');
-        if(i === selectedIdx && selectedIdx !== correctIdx) btn.classList.add('wrong');
-    });
-
-    if(selectedIdx === correctIdx) score++;
-    
-    document.getElementById('insight-text').innerText = quizData[currentIdx].i;
-    document.getElementById('insight-box').style.display = 'block';
+    }, 1000);
 }
 
 function loadQuestion() {
@@ -263,9 +234,11 @@ function loadQuestion() {
         showFinalScore();
         return;
     }
+    
     const q = quizData[currentIdx];
-    document.getElementById('question-text').innerText = `Question ${currentIdx + 1}/150 : ${q.q}`;
+    document.getElementById('question-text').innerText = `Question ${currentIdx + 1}/${quizData.length} : ${q.q}`;
     document.getElementById('insight-box').style.display = 'none';
+    
     const container = document.getElementById('options-container');
     container.innerHTML = '';
     
@@ -305,9 +278,10 @@ function loadNextQuestion() {
 function showFinalScore() {
     document.getElementById('game-view').style.display = 'none';
     document.getElementById('score-screen').style.display = 'block';
-    document.getElementById('final-score').innerText = `${score} / 150`;
+    document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
 }
 
+// Lancement automatique au chargement
 window.onload = loadQuestion;
 </script>
 </body>
