@@ -112,16 +112,46 @@ let timer;
 let timeLeft = 30;
 
 function startTimer() {
+    // On réinitialise le temps à 30
     timeLeft = 30;
     document.getElementById('timer').innerText = timeLeft;
+    
+    // On nettoie l'ancien intervalle s'il existe pour éviter les accélérations
+    if (timer) clearInterval(timer);
+
     timer = setInterval(() => {
         timeLeft--;
-        document.getElementById('timer').innerText = timeLeft;
+        
+        // Mise à jour de l'affichage
+        const timerDisplay = document.getElementById('timer');
+        if(timerDisplay) {
+            timerDisplay.innerText = timeLeft;
+        }
+
         if(timeLeft <= 0) {
             clearInterval(timer);
-            revealAnswer(-1);
+            revealAnswer(-1); // Force la révélation si le temps est écoulé
         }
-    }, 1000);
+    }, 1000); // 1000ms = 1 seconde
+}
+
+function revealAnswer(selectedIdx) {
+    // IMPORTANT : On arrête le chrono dès qu'on clique
+    clearInterval(timer); 
+    
+    const correctIdx = quizData[currentIdx].a;
+    const buttons = document.querySelectorAll('#options-container button');
+    
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if(i === correctIdx) btn.classList.add('correct');
+        if(i === selectedIdx && selectedIdx !== correctIdx) btn.classList.add('wrong');
+    });
+
+    if(selectedIdx === correctIdx) score++;
+    
+    document.getElementById('insight-text').innerText = quizData[currentIdx].i;
+    document.getElementById('insight-box').style.display = 'block';
 }
 
 function loadQuestion() {
@@ -178,4 +208,3 @@ window.onload = loadQuestion;
 </script>
 </body>
 </html>
-
